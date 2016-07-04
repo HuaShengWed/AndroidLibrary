@@ -49,7 +49,6 @@ import java.util.regex.Pattern;
  */
 public class TerminalUtils {
 
-
     /**
      * 产品名称
      *

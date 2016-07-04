@@ -1,81 +1,61 @@
 package com.huasheng.library.base;
 
-import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.Observable;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.IBinder;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
+import android.text.TextUtils;
 import android.util.AttributeSet;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.WindowManager;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
+import android.view.Window;
+import android.widget.Toast;
 
 import com.huasheng.library.utils.ToastUtils;
+import com.huasheng.library.view.dialog.CustomConfirmDialog;
 import com.zhy.autolayout.AutoFrameLayout;
 import com.zhy.autolayout.AutoLinearLayout;
 import com.zhy.autolayout.AutoRelativeLayout;
 
+import butterknife.ButterKnife;
+
 
 /**
- * ClassName: BaseActivity<p>
- * Author:tb<p>
- * Fuction: Activity的基类<p>
- * CreateDate:2016/3/14 18:42<p>
- * UpdateUser:<p>
- * UpdateDate:<p>
+ * @author (YD)
+ * @version (1.0)
+ * @ProjectName WeddingPlanner
+ * @Title: BaseActivity
+ * @Package com.huasheng.library.base
+ * @Description: TODO(BaseActivity.....)
+ * @date 16/7/4
+ * @time 下午3:52
  */
-public abstract class BaseActivity extends FragmentActivity
-        implements View.OnClickListener, BaseView {
+public abstract class BaseActivity extends FragmentActivity implements ISuperBaseView {
 
-    /* 上下文 */
-    protected Context mContext = this;
+    private ProgressDialog mProgressDialog;
 
+    private FragmentManager fragmentManager;
 
     private static final String LAYOUT_LINEARLAYOUT = "LinearLayout";
     private static final String LAYOUT_FRAMELAYOUT = "FrameLayout";
     private static final String LAYOUT_RELATIVELAYOUT = "RelativeLayout";
 
-    /**
-     * 动画枚举
-     */
-    public enum ActivityAnimation {
-        FADE_HOLD, SCALE_ALPHA, SCALE_ROTATE_ALPHA, SCALE_TRANSLATE_ROTATE_ALPHA, SCALE_TRANSLATE_ALPHA, HYPERSPACE, PUSH_LEFT, PUSH_RIGHT, PUSH_UP, SLIDE_LEFT, WAVE_SCALE_ALPHA, ZOOM_ENTER, SLIDE_UP
-    }
-
-    /**
-     * rxbus对象
-     * 结束Activity的可观测对象
-     */
-    private Observable<Boolean> mFinishObservable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            // 透明状态栏
-            getWindow().addFlags(
-                    WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-            // 透明导航栏
-            getWindow().addFlags(
-                    WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
-
-        }
-        new Handler().post(new Runnable() {
-            @Override
-            public void run() {
-                initView();
-                initData();
-                initAction();
-            }
-        });
+        // 隐藏标题栏
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        initContentView(savedInstanceState);
+        // 初始化View注入
+        ButterKnife.bind(this);
+        initView();
+        initPresenter();
     }
 
     @Override
@@ -104,161 +84,224 @@ public abstract class BaseActivity extends FragmentActivity
         setIntent(intent);
     }
 
+    /**
+     * 初始化布局
+     */
+    public abstract void initContentView(Bundle savedInstanceState);
+
+    /**
+     * 初始化控件
+     */
+    public abstract void initView();
+
+    /**
+     * 初始化控制中心
+     */
+    public abstract void initPresenter();
+
     @Override
-    protected void onResume() {
-        super.onResume();
+    public void finish() {
+        super.finish();
+    }
+
+    /**
+     * 显示单选对话框
+     *
+     * @param title           标题
+     * @param message         提示信息
+     * @param strings         选项数组
+     * @param checkedItem     默认选中
+     * @param onClickListener 点击事件的监听
+     */
+    public void showRadioButtonDialog(String title, String message, String[] strings, int checkedItem, DialogInterface.OnClickListener onClickListener) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(title);
+        if (!TextUtils.isEmpty(message)) {
+            builder.setMessage(message);
+        }
+        builder.setSingleChoiceItems(strings, checkedItem, onClickListener);
+        builder.create();
+        builder.show();
+    }
+
+    /**
+     * 显示单选对话框
+     *
+     * @param title           标题
+     * @param strings         选项数组
+     * @param onClickListener 点击事件的监听
+     */
+    public void showRadioButtonDialog(String title, String[] strings, DialogInterface.OnClickListener onClickListener) {
+        showRadioButtonDialog(title, null, strings, 0, onClickListener);
+    }
+
+    /**
+     * 弹出自定义对话框
+     */
+    public void showConfirmDialog(String title, View.OnClickListener positiveListener) {
+        CustomConfirmDialog confirmDialog = new CustomConfirmDialog(this, title, positiveListener);
+        confirmDialog.show();
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
+    public void showProgress(boolean flag, String message) {
+        if (mProgressDialog == null) {
+            mProgressDialog = new ProgressDialog(this);
+            mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            mProgressDialog.setCancelable(flag);
+            mProgressDialog.setCanceledOnTouchOutside(false);
+            mProgressDialog.setMessage(message);
+        }
+
+        mProgressDialog.show();
     }
 
-
-    protected View getDecorView() {
-        return getWindow().getDecorView();
+    @Override
+    public void showProgress(String message) {
+        showProgress(true, message);
     }
 
+    @Override
+    public void showProgress() {
+        showProgress(true);
+    }
+
+    @Override
+    public void showProgress(boolean flag) {
+        showProgress(flag, "");
+    }
+
+    @Override
+    public void hideProgress() {
+        if (mProgressDialog == null)
+            return;
+
+        if (mProgressDialog.isShowing()) {
+            mProgressDialog.dismiss();
+        }
+    }
+
+    @Override
+    public void showToast(int resId) {
+        showToast(getString(resId));
+    }
+
+    @Override
+    public void showToast(String msg) {
+        if (!isFinishing()) {
+            ToastUtils.show(msg, Toast.LENGTH_SHORT);
+        }
+    }
+
+    @Override
+    public Context getContext() {
+        return this;
+    }
+
+    @Override
+    public void close() {
+        finish();
+    }
+
+    //--------------------------Fragment相关--------------------------//
 
     /**
-     * 初始化View
-     */
-    protected void initView(){
-
-    }
-
-    /**
-     * 初始数据
-     */
-    protected  void initData(){
-
-    }
-
-    /**
-     * 设置监听
-     */
-    protected void initAction() {
-
-    }
-
-    /**
-     * 返回Bundle
+     * 获取Fragment管理器
      *
      * @return
      */
-    public Bundle getExtra() {
-        Intent intent = getIntent();
-        if (null == intent) {
-            return null;
+    public FragmentManager getBaseFragmentManager() {
+        if (fragmentManager == null) {
+            fragmentManager = getSupportFragmentManager();
         }
-        return intent.getExtras();
+        return fragmentManager;
     }
 
     /**
-     * 默认的跳转动画
+     * 获取Fragment事物管理
      *
-     * @param intent
-     */
-    public void startActivityes(final Intent intent, View v) {
-//        RxView.clicks(v)
-//                .throttleFirst(1, TimeUnit.SECONDS)
-//                .subscribe(new Observer<Object>() {
-//                    @Override
-//                    public void onCompleted() {
-//                        LogUtils.e("onCompleted");
-//                    }
-//
-//                    @Override
-//                    public void onError(Throwable e) {
-//                        LogUtils.e("error");
-//                    }
-//
-//                    @Override
-//                    public void onNext(Object o) {
-//                        LogUtils.d("button clicked");
-//                        startActivity(intent, ActivityAnimation.PUSH_LEFT);
-//                    }
-//                });
-
-    }
-
-    /**
-     * 跳转加动画
-     *
-     * @param intent
-     * @param animationId
-     */
-    public void startActivity(Intent intent, ActivityAnimation animationId) {
-        startActivity(intent);
-//		initAnimation(animationId);
-    }
-
-    public void showActivity(Activity aty, Intent it) {
-        aty.startActivity(it);
-    }
-
-
-    @Override
-    public void onClick(View v) {
-
-    }
-
-    /**
-     * 继承BaseView抽出显示信息通用行为
-     *
-     * @param msg
-     */
-    @Override
-    public void toast(String msg) {
-//        showSnackbar(msg);
-        ToastUtils.show(msg);
-    }
-
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent ev) {
-        if (ev.getAction() == MotionEvent.ACTION_DOWN) {
-            View v = getCurrentFocus();
-            if (isShouldHideKeyboard(v, ev)) {
-                hideKeyboard(v.getWindowToken());
-            }
-        }
-        return super.dispatchTouchEvent(ev);
-    }
-
-    /**
-     * @param v
-     * @param event
      * @return
      */
-    private boolean isShouldHideKeyboard(View v, MotionEvent event) {
-        if (v != null && (v instanceof EditText)) {
-            int[] l = {0, 0};
-            v.getLocationInWindow(l);
-            int left = l[0];
-            int top = l[1];
-            int bottom = top + v.getHeight();
-            int right = left + v.getWidth();
-            if (event.getX() > left && event.getX() < right
-                    && event.getY() > top && event.getY() < bottom) {
-                // 点击EditText的事件，忽略它。
-                return false;
-            } else {
-                return true;
-            }
-        }
-        // 如果焦点不是EditText则忽略，这个发生在视图刚绘制完，第一个焦点不在EditText上，和用户用轨迹球选择其他的焦点
-        return false;
+    public FragmentTransaction getFragmentTransaction() {
+        return getBaseFragmentManager().beginTransaction();
     }
 
     /**
-     * 获取InputMethodManager，隐藏软键盘
+     * 替换一个Fragment
      *
-     * @param token
+     * @param res
+     * @param fragment
      */
-    private void hideKeyboard(IBinder token) {
-        if (token != null) {
-            InputMethodManager im = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            im.hideSoftInputFromWindow(token, InputMethodManager.HIDE_NOT_ALWAYS);
+    public void replaceFragment(int res, BaseFragment fragment) {
+        replaceFragment(res, fragment, false);
+    }
+
+    /**
+     * 替换一个Fragment并设置是否加入回退栈
+     *
+     * @param res
+     * @param fragment
+     * @param isAddToBackStack
+     */
+    public void replaceFragment(int res, BaseFragment fragment, boolean isAddToBackStack) {
+        FragmentTransaction fragmentTransaction = getFragmentTransaction();
+        fragmentTransaction.replace(res, fragment);
+        if (isAddToBackStack) {
+            fragmentTransaction.addToBackStack(null);
+        }
+        fragmentTransaction.commit();
+
+    }
+
+    /**
+     * 添加一个Fragment
+     *
+     * @param res
+     * @param fragment
+     */
+    public void addFragment(int res, Fragment fragment) {
+        FragmentTransaction fragmentTransaction = getFragmentTransaction();
+        fragmentTransaction.add(res, fragment);
+        fragmentTransaction.commit();
+    }
+
+    /**
+     * 移除一个Fragment
+     *
+     * @param fragment
+     */
+    public void removeFragment(Fragment fragment) {
+        FragmentTransaction fragmentTransaction = getFragmentTransaction();
+        fragmentTransaction.remove(fragment);
+        fragmentTransaction.commit();
+    }
+
+    /**
+     * 显示一个Fragment
+     *
+     * @param fragment
+     */
+    public void showFragment(Fragment fragment) {
+        if (fragment.isHidden()) {
+            FragmentTransaction fragmentTransaction = getFragmentTransaction();
+            fragmentTransaction.show(fragment);
+            fragmentTransaction.commit();
         }
     }
+
+    /**
+     * 隐藏一个Fragment
+     *
+     * @param fragment
+     */
+    public void hideFragment(Fragment fragment) {
+        if (!fragment.isHidden()) {
+            FragmentTransaction fragmentTransaction = getFragmentTransaction();
+            fragmentTransaction.hide(fragment);
+            fragmentTransaction.commit();
+        }
+    }
+
+    //--------------------------Fragment相关end--------------------------//
+
 }

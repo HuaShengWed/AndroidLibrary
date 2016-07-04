@@ -2,7 +2,7 @@ package com.huasheng.library.utils;
 
 import android.widget.Toast;
 
-import com.huasheng.library.base.BaseApplication;
+import com.huasheng.library.app.BaseApplication;
 
 
 /**

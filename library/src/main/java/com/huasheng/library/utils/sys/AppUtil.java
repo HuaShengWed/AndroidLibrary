@@ -26,6 +26,7 @@ import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.huasheng.library.R;
+import com.huasheng.library.app.BaseApplication;
 import com.huasheng.library.utils.LogUtils;
 import com.huasheng.library.utils.StringUtils;
 
@@ -47,6 +48,13 @@ import java.util.List;
  * @time 16:43
  */
 public class AppUtil {
+
+
+    /**
+     * The context.
+     */
+    private static Context mContext = BaseApplication.getInstance();
+
 
     /**
      * 发送邮件
@@ -746,6 +754,7 @@ public class AppUtil {
             Intent pIntent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + PhoneNumberUtils.formatNumber(phoneNum)));
             pIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 //            context.startActivity(pIntent);
+
         } catch (ActivityNotFoundException e) {
             Log.e("Customer service phone", "ActivityNotFoundException : ", e);
         }
