@@ -6,11 +6,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
-import com.yufeng.weddingdistribution.baseadapter.listener.CommonOnItemChildCheckedChangeListener;
-import com.yufeng.weddingdistribution.baseadapter.listener.CommonOnItemChildClickListener;
-import com.yufeng.weddingdistribution.baseadapter.listener.CommonOnItemChildLongClickListener;
-import com.yufeng.weddingdistribution.baseadapter.viewhold.CommonAdapterViewHolder;
-import com.yufeng.weddingdistribution.baseadapter.viewhold.CommonViewHolderHelper;
+import com.huasheng.library.baseadapter.listener.CommonOnItemChildCheckedChangeListener;
+import com.huasheng.library.baseadapter.listener.CommonOnItemChildClickListener;
+import com.huasheng.library.baseadapter.listener.CommonOnItemChildLongClickListener;
+import com.huasheng.library.baseadapter.viewhold.CommonAdapterViewHolder;
+import com.huasheng.library.baseadapter.viewhold.CommonViewHolderHelper;
 
 import java.util.ArrayList;
 import java.util.Collections;
